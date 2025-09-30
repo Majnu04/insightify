@@ -100,7 +100,7 @@ const Footer = () => {
             © {currentYear} Insightify. All rights reserved.
           </p>
           <p className="text-gray-400 text-sm mt-4 md:mt-0">
-            Built with ❤️ using React and OpenAI
+            Developed by Gouri Shanker with ❤️ using React and Google AI
           </p>
         </div>
       </div>
