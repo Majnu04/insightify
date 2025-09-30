@@ -2,34 +2,46 @@ import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, File, X, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAnalysis } from '../context/AnalysisContext';
+import { resumeService } from '../services/api';
 
 const ResumeUpload = ({ onClose }) => {
   const [uploadStatus, setUploadStatus] = useState('idle'); // idle, uploading, success, error
   const [uploadedFile, setUploadedFile] = useState(null);
-  const [analysisData, setAnalysisData] = useState(null);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { setCurrentAnalysis, setLoading, setError: setAnalysisError } = useAnalysis();
 
   const onDrop = useCallback(async (acceptedFiles) => {
     const file = acceptedFiles[0];
     if (file) {
       setUploadedFile(file);
       setUploadStatus('uploading');
+      setError(null);
+      setLoading(true);
       
-      // Simulate file upload and analysis
       try {
-        await simulateFileAnalysis(file);
+        console.log('Starting real resume analysis...');
+        const analysisResult = await resumeService.analyzeResume(file);
+        console.log('Analysis completed:', analysisResult);
+        
+        setCurrentAnalysis(analysisResult);
         setUploadStatus('success');
         
         // Navigate to analysis page after a short delay
         setTimeout(() => {
-          navigate('/analysis', { state: { analysisData } });
+          navigate('/analysis');
           onClose();
         }, 2000);
       } catch (error) {
+        console.error('Resume analysis failed:', error);
         setUploadStatus('error');
+        setError(error.message);
+        setAnalysisError(error.message);
+        setLoading(false);
       }
     }
-  }, [navigate, onClose, analysisData]);
+  }, [navigate, onClose, setCurrentAnalysis, setLoading, setAnalysisError]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -41,67 +53,6 @@ const ResumeUpload = ({ onClose }) => {
     maxFiles: 1,
     maxSize: 10 * 1024 * 1024, // 10MB
   });
-
-  const simulateFileAnalysis = async (file) => {
-    // Simulate API call to analyze resume
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Mock analysis data
-    const mockData = {
-      fileName: file.name,
-      fileSize: file.size,
-      skills: [
-        { name: 'JavaScript', proficiency: 85, category: 'Programming' },
-        { name: 'React', proficiency: 90, category: 'Frontend' },
-        { name: 'Node.js', proficiency: 75, category: 'Backend' },
-        { name: 'Python', proficiency: 80, category: 'Programming' },
-        { name: 'Machine Learning', proficiency: 70, category: 'AI/ML' },
-        { name: 'SQL', proficiency: 85, category: 'Database' },
-        { name: 'AWS', proficiency: 65, category: 'Cloud' },
-        { name: 'Git', proficiency: 88, category: 'Tools' },
-      ],
-      experience: {
-        totalYears: 5.2,
-        companies: ['TechCorp', 'StartupXYZ', 'DataCorp'],
-        roles: ['Software Engineer', 'Full Stack Developer', 'Senior Developer'],
-      },
-      education: {
-        degree: 'Bachelor of Computer Science',
-        university: 'Tech University',
-        graduationYear: 2018,
-      },
-      suggestions: [
-        'Consider learning TypeScript to enhance your JavaScript skills',
-        'Cloud certifications would strengthen your profile',
-        'Add more data analysis projects to your portfolio',
-      ],
-      jobMatches: [
-        {
-          title: 'Senior Full Stack Developer',
-          company: 'TechStart Inc.',
-          match: 92,
-          location: 'San Francisco, CA',
-          salary: '$120,000 - $150,000',
-        },
-        {
-          title: 'React Developer',
-          company: 'WebSolutions',
-          match: 88,
-          location: 'New York, NY',
-          salary: '$100,000 - $130,000',
-        },
-        {
-          title: 'Software Engineer',
-          company: 'InnovateCorp',
-          match: 85,
-          location: 'Austin, TX',
-          salary: '$110,000 - $140,000',
-        },
-      ],
-    };
-    
-    setAnalysisData(mockData);
-  };
 
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
@@ -156,7 +107,7 @@ const ResumeUpload = ({ onClose }) => {
             Analyzing Your Resume
           </h3>
           <p className="text-gray-600 mb-4">
-            Our AI is processing your resume and extracting insights...
+            Our AI is processing your resume with Google Gemini and extracting real insights...
           </p>
           <div className="bg-gray-100 rounded-lg p-4 max-w-md mx-auto">
             <div className="flex items-center space-x-3">
@@ -191,12 +142,13 @@ const ResumeUpload = ({ onClose }) => {
             Upload Failed
           </h3>
           <p className="text-gray-600 mb-4">
-            There was an error analyzing your resume. Please try again.
+            {error || 'There was an error analyzing your resume. Please try again.'}
           </p>
           <button
             onClick={() => {
               setUploadStatus('idle');
               setUploadedFile(null);
+              setError(null);
             }}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
           >

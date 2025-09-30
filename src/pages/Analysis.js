@@ -14,80 +14,24 @@ import {
 import SkillChart from '../components/SkillChart';
 import JobMatches from '../components/JobMatches';
 import CareerInsights from '../components/CareerInsights';
+import { useAnalysis } from '../context/AnalysisContext';
 
 const Analysis = () => {
   const location = useLocation();
-  const [analysisData, setAnalysisData] = useState(null);
+  const { currentAnalysis, setCurrentAnalysis } = useAnalysis();
   const [activeTab, setActiveTab] = useState('skills');
 
   useEffect(() => {
-    // Get analysis data from navigation state or load mock data
+    // Get analysis data from navigation state or use current analysis
     if (location.state?.analysisData) {
-      setAnalysisData(location.state.analysisData);
-    } else {
-      // Load mock data if no state is passed
-      setAnalysisData(getMockAnalysisData());
+      setCurrentAnalysis(location.state.analysisData);
     }
-  }, [location.state]);
+    // If no analysis data available, user will see the loading state
+  }, [location.state, setCurrentAnalysis]);
 
-  const getMockAnalysisData = () => ({
-    fileName: 'sample_resume.pdf',
-    fileSize: 245760,
-    skills: [
-      { name: 'JavaScript', proficiency: 85, category: 'Programming' },
-      { name: 'React', proficiency: 90, category: 'Frontend' },
-      { name: 'Node.js', proficiency: 75, category: 'Backend' },
-      { name: 'Python', proficiency: 80, category: 'Programming' },
-      { name: 'Machine Learning', proficiency: 70, category: 'AI/ML' },
-      { name: 'SQL', proficiency: 85, category: 'Database' },
-      { name: 'AWS', proficiency: 65, category: 'Cloud' },
-      { name: 'Git', proficiency: 88, category: 'Tools' },
-      { name: 'Docker', proficiency: 70, category: 'DevOps' },
-      { name: 'TypeScript', proficiency: 75, category: 'Programming' },
-    ],
-    experience: {
-      totalYears: 5.2,
-      companies: ['TechCorp', 'StartupXYZ', 'DataCorp'],
-      roles: ['Software Engineer', 'Full Stack Developer', 'Senior Developer'],
-    },
-    education: {
-      degree: 'Bachelor of Computer Science',
-      university: 'Tech University',
-      graduationYear: 2018,
-    },
-    suggestions: [
-      'Consider learning TypeScript to enhance your JavaScript skills',
-      'Cloud certifications would strengthen your profile',
-      'Add more data analysis projects to your portfolio',
-      'Consider contributing to open source projects',
-    ],
-    jobMatches: [
-      {
-        title: 'Senior Full Stack Developer',
-        company: 'TechStart Inc.',
-        match: 92,
-        location: 'San Francisco, CA',
-        salary: '$120,000 - $150,000',
-        requirements: ['React', 'Node.js', 'JavaScript', 'AWS'],
-      },
-      {
-        title: 'React Developer',
-        company: 'WebSolutions',
-        match: 88,
-        location: 'New York, NY',
-        salary: '$100,000 - $130,000',
-        requirements: ['React', 'JavaScript', 'TypeScript'],
-      },
-      {
-        title: 'Software Engineer',
-        company: 'InnovateCorp',
-        match: 85,
-        location: 'Austin, TX',
-        salary: '$110,000 - $140,000',
-        requirements: ['JavaScript', 'Python', 'SQL', 'Git'],
-      },
-    ],
-  });
+  const analysisData = currentAnalysis;
+
+
 
   const tabs = [
     { id: 'skills', label: 'Skills Analysis', icon: Brain },
@@ -103,7 +47,8 @@ const Analysis = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Brain className="w-16 h-16 text-gray-400 mx-auto mb-4 animate-pulse" />
-          <h2 className="text-xl font-semibold text-gray-600">Loading Analysis...</h2>
+          <h2 className="text-xl font-semibold text-gray-600">No Analysis Available</h2>
+          <p className="text-gray-500 mt-2">Upload a resume to see detailed analysis</p>
         </div>
       </div>
     );
