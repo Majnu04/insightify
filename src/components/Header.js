@@ -37,8 +37,8 @@ const Header = () => {
                   to={item.href}
                   className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                     isActive(item.href)
-                      ? 'text-blue-600 bg-blue-50'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      ? 'text-slate-700 bg-slate-100'
+                      : 'text-slate-600 hover:text-slate-800 hover:bg-slate-50'
                   }`}
                 >
                   <Icon className="w-4 h-4" />

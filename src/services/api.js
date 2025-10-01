@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api';
-const GOOGLE_API_KEY = 'AIzaSyCbijvF9OPldchNl7W-7me9twHnR7j8eXA';
+const GOOGLE_API_KEY = process.env.REACT_APP_GOOGLE_API_KEY || '';
 
 // Google AI API instance
 const googleAiApi = axios.create({
@@ -145,25 +145,37 @@ const analyzeResumeWithGoogleAI = async (resumeText, file) => {
     const response = await googleAiApi.post(`/models/gemini-pro:generateContent?key=${GOOGLE_API_KEY}`, {
       contents: [{
         parts: [{
-          text: `You are an expert AI career analyst. Analyze this resume and extract information in JSON format.
+          text: `You are an expert AI career analyst and technical recruiter with 15+ years of experience. Analyze this resume thoroughly and extract precise information in JSON format.
 
-Please respond with a valid JSON object with this exact structure:
+CRITICAL: Return ONLY valid JSON with this EXACT structure:
 {
-  "skills": [{"name": "JavaScript", "proficiency": 85, "category": "Programming"}],
-  "experience": {"totalYears": 5.2, "companies": ["Company1", "Company2"], "roles": ["Role1", "Role2"]},
-  "education": {"degree": "degree_name", "university": "university_name", "graduationYear": 2020},
-  "suggestions": ["suggestion1", "suggestion2", "suggestion3"],
-  "jobMatches": [{"title": "job_title", "company": "company_name", "match": 92, "location": "location", "salary": "salary_range", "requirements": ["skill1", "skill2"]}],
-  "summary": "Professional summary"
+  "skills": [{"name": "JavaScript", "proficiency": 85, "category": "Programming", "yearsUsed": 3}],
+  "experience": {"totalYears": 5.2, "companies": ["Company1", "Company2"], "roles": ["Role1", "Role2"], "currentLevel": "Senior"},
+  "education": {"degree": "degree_name", "university": "university_name", "graduationYear": 2020, "gpa": "3.8"},
+  "suggestions": ["suggestion1", "suggestion2", "suggestion3", "suggestion4", "suggestion5"],
+  "jobMatches": [{"title": "job_title", "company": "company_name", "match": 92, "location": "location", "salary": "salary_range", "requirements": ["skill1", "skill2"], "type": "Full-time"}],
+  "summary": "Professional summary",
+  "strengths": ["strength1", "strength2", "strength3"],
+  "achievements": ["achievement1", "achievement2"]
 }
 
-Extract:
-1. All technical skills with proficiency levels (40-95)
-2. Years of experience and companies
-3. Education details
-4. Career suggestions
-5. Job matches with percentages
-6. Categorize skills (Programming, Frontend, Backend, Database, Cloud, DevOps, AI/ML, Tools)
+Analysis Guidelines:
+1. SKILLS: Extract ALL mentioned skills with accurate proficiency (based on years used, project complexity, leadership roles)
+   - Beginner: 40-55 (mentioned briefly, basic projects)
+   - Intermediate: 56-75 (1-3 years, substantial projects)
+   - Advanced: 76-90 (3+ years, complex projects, mentoring)
+   - Expert: 91-95 (5+ years, architecture decisions, team lead)
+   - Categories: Programming, Frontend, Backend, Database, Cloud, DevOps, AI/ML, Mobile, Tools, Design
+
+2. EXPERIENCE: Calculate precise years from dates, extract company names and roles accurately
+
+3. EDUCATION: Include degree type, institution, graduation year, GPA if mentioned
+
+4. JOB MATCHES: Based on skills, create realistic job matches with accurate salary ranges for the experience level
+
+5. SUGGESTIONS: Provide specific, actionable career improvement recommendations
+
+6. SUMMARY: Write a concise professional summary highlighting key strengths
 
 Resume Text:
 ${resumeText}`
@@ -211,44 +223,108 @@ const generateFallbackAnalysis = (resumeText, file) => {
   console.log('Generating fallback analysis...');
   
   const skillKeywords = {
-    'javascript': { category: 'Programming', proficiency: 80 },
-    'react': { category: 'Frontend', proficiency: 85 },
-    'node.js': { category: 'Backend', proficiency: 75 },
-    'python': { category: 'Programming', proficiency: 70 },
-    'typescript': { category: 'Programming', proficiency: 65 },
-    'html': { category: 'Frontend', proficiency: 90 },
-    'css': { category: 'Frontend', proficiency: 85 },
-    'sql': { category: 'Database', proficiency: 70 },
-    'mongodb': { category: 'Database', proficiency: 65 },
-    'postgresql': { category: 'Database', proficiency: 70 },
-    'mysql': { category: 'Database', proficiency: 75 },
-    'aws': { category: 'Cloud', proficiency: 60 },
-    'azure': { category: 'Cloud', proficiency: 55 },
-    'docker': { category: 'DevOps', proficiency: 55 },
-    'git': { category: 'Tools', proficiency: 85 },
-    'django': { category: 'Backend', proficiency: 70 },
-    'express': { category: 'Backend', proficiency: 75 },
-    'vue': { category: 'Frontend', proficiency: 70 },
-    'angular': { category: 'Frontend', proficiency: 65 },
-    'kubernetes': { category: 'DevOps', proficiency: 50 },
-    'jenkins': { category: 'DevOps', proficiency: 55 },
-    'redis': { category: 'Database', proficiency: 60 },
-    'spring': { category: 'Backend', proficiency: 65 },
-    'java': { category: 'Programming', proficiency: 70 },
-    'flask': { category: 'Backend', proficiency: 65 },
-    'next.js': { category: 'Frontend', proficiency: 75 },
-    'bootstrap': { category: 'Frontend', proficiency: 80 },
-    'sass': { category: 'Frontend', proficiency: 75 },
+    // Programming Languages
+    'javascript': { category: 'Programming', baseProficiency: 75, contextBoost: { 'senior': 15, 'lead': 20, 'architect': 25 } },
+    'python': { category: 'Programming', baseProficiency: 70, contextBoost: { 'data': 10, 'ml': 15, 'ai': 20 } },
+    'typescript': { category: 'Programming', baseProficiency: 65, contextBoost: { 'angular': 10, 'enterprise': 15 } },
+    'java': { category: 'Programming', baseProficiency: 70, contextBoost: { 'spring': 10, 'enterprise': 15 } },
+    'c#': { category: 'Programming', baseProficiency: 68, contextBoost: { 'asp.net': 10, '.net': 10 } },
+    'go': { category: 'Programming', baseProficiency: 65, contextBoost: { 'backend': 10, 'microservices': 15 } },
+    'rust': { category: 'Programming', baseProficiency: 60, contextBoost: { 'systems': 15, 'performance': 10 } },
+    
+    // Frontend Technologies
+    'react': { category: 'Frontend', baseProficiency: 80, contextBoost: { 'redux': 10, 'next.js': 15 } },
+    'vue': { category: 'Frontend', baseProficiency: 70, contextBoost: { 'nuxt': 10, 'composition': 15 } },
+    'angular': { category: 'Frontend', baseProficiency: 65, contextBoost: { 'typescript': 10, 'rxjs': 15 } },
+    'html': { category: 'Frontend', baseProficiency: 85, contextBoost: { 'semantic': 5, 'accessibility': 10 } },
+    'css': { category: 'Frontend', baseProficiency: 80, contextBoost: { 'sass': 5, 'responsive': 10 } },
+    'tailwind': { category: 'Frontend', baseProficiency: 75, contextBoost: { 'component': 5, 'design': 10 } },
+    'bootstrap': { category: 'Frontend', baseProficiency: 78, contextBoost: { 'responsive': 5 } },
+    'sass': { category: 'Frontend', baseProficiency: 72, contextBoost: { 'architecture': 10 } },
+    'next.js': { category: 'Frontend', baseProficiency: 75, contextBoost: { 'ssr': 10, 'static': 15 } },
+    
+    // Backend Technologies
+    'node.js': { category: 'Backend', baseProficiency: 75, contextBoost: { 'express': 5, 'microservices': 15 } },
+    'express': { category: 'Backend', baseProficiency: 75, contextBoost: { 'api': 5, 'middleware': 10 } },
+    'django': { category: 'Backend', baseProficiency: 70, contextBoost: { 'rest': 10, 'orm': 10 } },
+    'flask': { category: 'Backend', baseProficiency: 65, contextBoost: { 'api': 10, 'microservices': 15 } },
+    'spring': { category: 'Backend', baseProficiency: 65, contextBoost: { 'boot': 10, 'security': 15 } },
+    'asp.net': { category: 'Backend', baseProficiency: 68, contextBoost: { 'core': 10, 'mvc': 10 } },
+    
+    // Databases
+    'postgresql': { category: 'Database', baseProficiency: 70, contextBoost: { 'optimization': 10, 'advanced': 15 } },
+    'mysql': { category: 'Database', baseProficiency: 75, contextBoost: { 'performance': 10 } },
+    'mongodb': { category: 'Database', baseProficiency: 65, contextBoost: { 'aggregation': 10, 'scaling': 15 } },
+    'redis': { category: 'Database', baseProficiency: 60, contextBoost: { 'caching': 10, 'sessions': 10 } },
+    'elasticsearch': { category: 'Database', baseProficiency: 58, contextBoost: { 'search': 15, 'analytics': 10 } },
+    
+    // Cloud & DevOps
+    'aws': { category: 'Cloud', baseProficiency: 60, contextBoost: { 'ec2': 5, 'lambda': 10, 'architect': 20 } },
+    'azure': { category: 'Cloud', baseProficiency: 55, contextBoost: { 'devops': 10, 'functions': 10 } },
+    'gcp': { category: 'Cloud', baseProficiency: 52, contextBoost: { 'kubernetes': 10, 'ml': 15 } },
+    'docker': { category: 'DevOps', baseProficiency: 65, contextBoost: { 'compose': 5, 'swarm': 10, 'kubernetes': 15 } },
+    'kubernetes': { category: 'DevOps', baseProficiency: 50, contextBoost: { 'helm': 10, 'istio': 15 } },
+    'jenkins': { category: 'DevOps', baseProficiency: 55, contextBoost: { 'pipeline': 10, 'ci/cd': 15 } },
+    'gitlab': { category: 'DevOps', baseProficiency: 60, contextBoost: { 'ci/cd': 10 } },
+    'terraform': { category: 'DevOps', baseProficiency: 58, contextBoost: { 'infrastructure': 15 } },
+    
+    // Tools
+    'git': { category: 'Tools', baseProficiency: 85, contextBoost: { 'workflow': 5, 'branching': 10 } },
+    'webpack': { category: 'Tools', baseProficiency: 62, contextBoost: { 'optimization': 10 } },
+    'vite': { category: 'Tools', baseProficiency: 68, contextBoost: { 'fast': 5 } },
+    'jest': { category: 'Tools', baseProficiency: 70, contextBoost: { 'testing': 10 } },
+    'cypress': { category: 'Tools', baseProficiency: 65, contextBoost: { 'e2e': 10 } },
+    
+    // AI/ML
+    'tensorflow': { category: 'AI/ML', baseProficiency: 55, contextBoost: { 'deep': 15, 'neural': 15 } },
+    'pytorch': { category: 'AI/ML', baseProficiency: 52, contextBoost: { 'research': 15 } },
+    'scikit-learn': { category: 'AI/ML', baseProficiency: 60, contextBoost: { 'ml': 10 } },
+    'pandas': { category: 'AI/ML', baseProficiency: 65, contextBoost: { 'data': 10 } },
+    'numpy': { category: 'AI/ML', baseProficiency: 68, contextBoost: { 'scientific': 10 } },
   };
   
   const detectedSkills = [];
   Object.entries(skillKeywords).forEach(([skill, data]) => {
-    if (text.includes(skill)) {
+    const skillVariations = [skill, skill.replace('.', ''), skill.replace('-', '')];
+    const isFound = skillVariations.some(variation => text.includes(variation.toLowerCase()));
+    
+    if (isFound) {
+      let proficiency = data.baseProficiency;
+      
+      // Apply context boosts for more accurate proficiency
+      Object.entries(data.contextBoosts).forEach(([context, boost]) => {
+        if (text.includes(context.toLowerCase())) {
+          proficiency += boost;
+        }
+      });
+      
+      // Experience level boost
+      if (text.includes('senior') || text.includes('lead')) proficiency += 10;
+      if (text.includes('architect') || text.includes('principal')) proficiency += 15;
+      if (text.includes('expert') || text.includes('advanced')) proficiency += 12;
+      
+      // Years of experience boost (estimate from text patterns)
+      const yearMatches = text.match(/(\d+)\s*years?\s*(of\s*)?(experience|exp)/gi);
+      if (yearMatches) {
+        const years = Math.max(...yearMatches.map(match => parseInt(match.match(/\d+/)[0])));
+        if (years >= 5) proficiency += 15;
+        else if (years >= 3) proficiency += 10;
+        else if (years >= 2) proficiency += 5;
+      }
+      
+      // Ensure proficiency is within realistic bounds
+      proficiency = Math.max(45, Math.min(95, proficiency));
+      
+      // Add random variation for realism (±3)
+      proficiency += Math.floor(Math.random() * 7) - 3;
+      proficiency = Math.max(40, Math.min(95, proficiency));
+      
       detectedSkills.push({
         name: skill === 'node.js' ? 'Node.js' : 
               skill === 'next.js' ? 'Next.js' :
+              skill === 'asp.net' ? 'ASP.NET' :
               skill.charAt(0).toUpperCase() + skill.slice(1),
-        proficiency: Math.max(45, Math.min(95, data.proficiency + Math.floor(Math.random() * 15) - 7)),
+        proficiency,
         category: data.category,
       });
     }
